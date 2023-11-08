@@ -7,7 +7,7 @@ import pygame
 class SpriteSheetGenerator:
     def __init__(self, master):
         self.master = master
-        self.master.title("Sprite Sheet Generator")
+        self.master.title("Tile Collector")
 
         # GUI Variables
         self.input_type_var = tk.StringVar(value="Folder")
@@ -29,6 +29,7 @@ class SpriteSheetGenerator:
         self.create_widgets()
 
     def create_widgets(self):
+        # Column 0
         # Input Type
         input_type_label = tk.Label(self.master, text="Input Type:")
         input_type_label.grid(row=0, column=0, sticky="w", padx=10, pady=(10, 0))
@@ -46,18 +47,12 @@ class SpriteSheetGenerator:
         input_path_entry = tk.Entry(self.master, textvariable=self.input_path_var, width=40)
         input_path_entry.grid(row=4, column=0, padx=20)
 
-        browse_input_button = tk.Button(self.master, text="Browse", command=self.browse_input_path)
-        browse_input_button.grid(row=4, column=1)
-
         # Output Path
         output_path_label = tk.Label(self.master, text="Output Path:")
         output_path_label.grid(row=5, column=0, sticky="w", padx=10, pady=(10, 0))
 
         output_path_entry = tk.Entry(self.master, textvariable=self.output_path_var, width=40)
         output_path_entry.grid(row=6, column=0, padx=20)
-
-        browse_output_button = tk.Button(self.master, text="Browse", command=self.browse_output_path)
-        browse_output_button.grid(row=6, column=1)
 
         # Tile Size
         tile_size_label = tk.Label(self.master, text="Tile Size (width, height):")
@@ -69,6 +64,17 @@ class SpriteSheetGenerator:
         # Start Button
         start_button = tk.Button(self.master, text="Start", command=self.start_process)
         start_button.grid(row=9, column=0, pady=(20, 0))
+
+        # Column 1
+        # Browse Buttons
+        browse_input_button = tk.Button(self.master, text="Browse", command=self.browse_input_path)
+        browse_input_button.grid(row=4, column=1)
+
+        browse_output_button = tk.Button(self.master, text="Browse", command=self.browse_output_path)
+        browse_output_button.grid(row=6, column=1)
+
+        # Column 2
+        # Empty for Image View
 
     def browse_input_path(self):
         path = filedialog.askdirectory() if self.input_type_var.get() == "Folder" else filedialog.askopenfilename()
@@ -171,3 +177,4 @@ if __name__ == "__main__":
     root = tk.Tk()
     app = SpriteSheetGenerator(root)
     root.mainloop()
+
