@@ -2,9 +2,8 @@ import os
 import tkinter as tk
 from tkinter import filedialog
 from PIL import Image, ImageTk
-import pygame
 
-class SpriteSheetGenerator:
+class TileCollector:
     def __init__(self, master):
         self.master = master
         self.master.title("Tile Collector")
@@ -15,20 +14,19 @@ class SpriteSheetGenerator:
         self.output_path_var = tk.StringVar()
         self.tile_size_var = tk.StringVar(value="16,16")
 
-        # Pygame Initialization
-        pygame.init()
-
         # Image View
         self.image_label = tk.Label(self.master, text="Image View:")
         self.image_label.grid(row=0, column=2, rowspan=10, padx=(20, 0))
+
+        # Pygame Initialization - Removed
 
         # GUI Setup
         self.setup_gui()
 
     def setup_gui(self):
         self.create_widgets()
-
     def create_widgets(self):
+
         # Column 0
         # Input Type
         input_type_label = tk.Label(self.master, text="Input Type:")
@@ -97,12 +95,10 @@ class SpriteSheetGenerator:
         if input_type == "Folder" and os.path.isdir(input_path):
             self.process_folder(input_path, all_image_tiles, tile_size)
         elif input_type == "File" and os.path.isfile(input_path) and input_path.endswith(".png"):
-            image = pygame.image.load(input_path)
-            image_tiles = self.break_image_into_tiles(image, tile_size)
+            image_tiles = self.break_image_into_tiles(Image.open(input_path), tile_size)
 
-            for tile in image_tiles:
-                if not any(self.are_surfaces_equal(tile, u_tile) for u_tile in all_image_tiles):
-                    all_image_tiles.append(tile)
+            unique_tiles = [tile for tile in image_tiles if not any(self.are_images_equal(tile, u_tile) for u_tile in all_image_tiles)]
+            all_image_tiles.extend(unique_tiles)
 
             self.save_spritesheet(all_image_tiles, output_path)
             self.show_image()
@@ -111,37 +107,24 @@ class SpriteSheetGenerator:
         for filename in os.listdir(input_directory):
             if filename.endswith(".png"):
                 image_path = os.path.join(input_directory, filename)
-                image = pygame.image.load(image_path)
-                image_tiles = self.break_image_into_tiles(image, tile_size)
+                image_tiles = self.break_image_into_tiles(Image.open(image_path), tile_size)
 
-                for tile in image_tiles:
-                    if not any(self.are_surfaces_equal(tile, u_tile) for u_tile in all_image_tiles):
-                        all_image_tiles.append(tile)
+                unique_tiles = [tile for tile in image_tiles if
+                                not any(self.are_images_equal(tile, u_tile) for u_tile in all_image_tiles)]
+                all_image_tiles.extend(unique_tiles)
 
         self.save_spritesheet(all_image_tiles, self.output_path_var.get())
         self.show_image()
 
     @staticmethod
     def break_image_into_tiles(image, tile_size):
-        width, height = image.get_size()
-        tiles = []
-
-        for y in range(0, height, tile_size[1]):
-            for x in range(0, width, tile_size[0]):
-                tile = image.subsurface((x, y, tile_size[0], tile_size[1]))
-                tiles.append(tile)
-
+        width, height = image.size
+        tiles = [image.crop((x, y, x + tile_size[0], y + tile_size[1])) for y in range(0, height, tile_size[1]) for x in range(0, width, tile_size[0])]
         return tiles
 
     @staticmethod
-    def are_surfaces_equal(surface1, surface2):
-        if surface1.get_size() != surface2.get_size():
-            return False
-
-        pixels1 = pygame.surfarray.array3d(surface1)
-        pixels2 = pygame.surfarray.array3d(surface2)
-
-        return (pixels1 == pixels2).all()
+    def are_images_equal(image1, image2):
+        return image1.tobytes() == image2.tobytes()
 
     @staticmethod
     def save_spritesheet(tiles, output_path):
@@ -149,17 +132,17 @@ class SpriteSheetGenerator:
         num_columns = int(num_tiles**0.5)
         num_rows = (num_tiles + num_columns - 1) // num_columns
 
-        sheet_width = num_columns * tiles[0].get_width()
-        sheet_height = num_rows * tiles[0].get_height()
+        sheet_width = num_columns * tiles[0].width
+        sheet_height = num_rows * tiles[0].height
 
-        spritesheet = pygame.Surface((sheet_width, sheet_height), pygame.SRCALPHA)
+        spritesheet = Image.new("RGBA", (sheet_width, sheet_height), (0, 0, 0, 0))
 
         for i, tile in enumerate(tiles):
             row = i // num_columns
             col = i % num_columns
-            spritesheet.blit(tile, (col * tile.get_width(), row * tile.get_height()))
+            spritesheet.paste(tile, (col * tile.width, row * tile.height))
 
-        pygame.image.save(spritesheet, output_path)
+        spritesheet.save(output_path)
 
     def show_image(self):
         image_path = self.output_path_var.get()
@@ -172,9 +155,7 @@ class SpriteSheetGenerator:
         else:
             self.image_label.configure(text="Image not found")
 
-
 if __name__ == "__main__":
     root = tk.Tk()
-    app = SpriteSheetGenerator(root)
+    app = TileCollector(root)
     root.mainloop()
-
