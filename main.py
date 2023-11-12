@@ -18,8 +18,6 @@ class TileCollector:
         self.image_label = tk.Label(self.master, text="Image View:")
         self.image_label.grid(row=0, column=2, rowspan=10, padx=(20, 0))
 
-        # Pygame Initialization - Removed
-
         # GUI Setup
         self.setup_gui()
 
